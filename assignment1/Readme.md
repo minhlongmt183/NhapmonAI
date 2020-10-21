@@ -1,0 +1,1 @@
+#This is the first assignment of AI subject at BK University
