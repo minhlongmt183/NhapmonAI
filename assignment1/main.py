@@ -25,7 +25,7 @@ class Stack():
             return node
 
 class Queue(Stack):
-    def remove(self):
+    def pop(self):
         if self.empty():
             raise Exception("empty frontier")
         else:
