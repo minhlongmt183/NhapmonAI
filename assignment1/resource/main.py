@@ -208,6 +208,12 @@ def print_solution(solutions, time):
 
 def main():
     while True:
+        print ('*'*100)
+        print("We have solved 100.000 queens in 45s with herustic search.")
+        print("please run our code on google colab to ensured it can solve with large number queen")
+        
+        print ('*'*60)
+        print()
         n_queens = int(input("input the number of queens: "))
 
         if(n_queens < 0):
