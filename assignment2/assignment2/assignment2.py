@@ -1,8 +1,6 @@
 # Them cac thu vien neu can
 
-def assign(file_input, file_output):
-    # read input
-
+def read_input(file_input):
     with open(file_input, "r") as f:
         # get depot_coordinates
         depot_coordinates = f.readline().split(' ') 
@@ -13,7 +11,8 @@ def assign(file_input, file_output):
         number_employees = int(data[1])
 
         # get infor of packages
-        packages = []
+        packages = [None]*number_packages
+        employees = [None]*number_employees
 
         for i in range(number_packages):
             package = {}
@@ -26,10 +25,28 @@ def assign(file_input, file_output):
             package["weight"] = int(package_info[3])
 
             packages.append(package)
-  
+        
+    return depot_coordinates, packages, employees
+
+def write_output(employees,file_output):
+    with open(file_output, "w") as f:
+        for employee in employees:
+            for package in employee:
+                f.write("{} ".format(package))
+            f.write("\n")
+
+def assign(file_input, file_output):
+    # read input
+    # depot_coordinates, packages, employees = read_input(file_input)
+
 
     # run algorithm
+
+
+    
     # write output
+    write_output(employees, file_output)
+
     return
 
 
