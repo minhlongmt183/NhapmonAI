@@ -1,81 +1,160 @@
 # Them cac thu vien neu can
 from functools import reduce
+from random import randint,choice,random
+from copy import deepcopy as dp
+from math import e
+import numpy as np
 
-def read_input(file_input):
-    with open(file_input, "r") as f:
-        # get depot_coordinates
-        depot_coord         = {}
-        data                = f.readline().split(' ') 
-        depot_coord["x"]    = int(data[0])
-        depot_coord["y"]    = int(data[1])
-
-        # get number employees and number packages
-        data                = f.readline().split(' ')
-        number_packages     = int(data[0])
-        number_employees    = int(data[1])
-
-        # get infor of packages
-        packages = []
-        employees = [None]*number_employees
-
-        for i in range(number_packages):
-            package         = {}
-            package_info    = f.readline().split(' ')
-
-            package["id"]           = int(i)
-            package["dest_coord_x"] = int(package_info[0])
-            package["dest_coord_y"] = int(package_info[1])
-            package["volume"]       = int(package_info[2])
-            package["weight"]       = int(package_info[3])
-
-            packages.append(package)
-        
-    return depot_coord, packages, employees
-
-def write_output(employees,file_output):
-    with open(file_output, "w") as f:
-        for employee in employees:
-            for package in employee:
-                f.write("{} ".format(package))
-            f.write("\n")
-
-def algorithm(depot_coord, packages, employees):
-    # A_start
-    inital_state
-
-    return employees
-
-def profit(employee, packages, depot_coord):
-    
-    energy      =   [(5 + packages[i]["volume"] + (packages[i]["weight"] * 2)) for i in employee]
-
-    distances   =   ((packages[0]["dest_coord_x"] - depot_coord["x"])** 2 \
-                +    (packages[0]["dest_coord_y"] - depot_coord["y"])** 2)**.5
-    
-    for i in range(1, len(packages)):
-        distances   +=  ((packages[i]["dest_coord_x"] - packages[i-1]["dest_coord_x"])** 2 \
-                    +   (packages[i]["dest_coord_y"] - packages[i-1]["dest_coord_y"])** 2)**.5
-
-    revenue     = reduce(lambda x,y: x+y, energy, 0)
-    expenses    = distances / 40 * 20 + 10
-    profit      = revenue - expenses
-    return profit
-
-def assign(file_input, file_output):
-    # read input
-    depot_coord, packages, employees = read_input(file_input)
-
-    # print(packages)
-
-    print(profit([0,3], packages, depot_coord))
-
-    # run algorithm
-    # employees = algorithm(depot_coord, packages, employees)
-
-    # write output
-    # write_output(employees, file_output)
-
-    return
+history = {}
+def log(func):
+    def inner(*args):
+        global history
+        # string =lambda x : "|{:<25}|".format(x) if len(str(x)) < 16 else "|{:<25}|".format(str(x))
+        # print(*[string(str(i)) for i in (func.__name__,*args)])
+        # print(func.__name__)
+        if history.get(func.__name__):
+            history[func.__name__] += 1
+        else : history[func.__name__] = 0
+        return func(*args)
+    return inner
 
 
-assign('input.txt', 'output.txt')
+def assign():
+    location ,amount,shipperNum ,packages,weightMatrix,offset =[None]*4 +[{}] +[0]
+    # nonlocal location ,amount,shipperNum ,packages, Map
+    WEIGHT = 4
+    VOLUMNE = 3
+    @log
+    def readInput( file_input):
+        nonlocal location ,amount,shipperNum ,packages
+        file = open(file_input,"r")
+        res = []
+        line = file.readline()
+        while line:
+            temp = line.split(" ")
+            res += [list(map( lambda x : int(x), temp))]
+            line = file.readline()
+        # res = list(map( lambda x : int(x), res))
+
+        location =(-1,*res[0])
+        amount,shipperNum  = res[1]
+        packages = [[i] + ele for i,ele in enumerate(res[2:])]
+
+    @log
+    def calPathWeight(begin,package):
+
+        return (
+            5  +package[VOLUMNE] + package[WEIGHT]*2
+            - (((begin[1]-package[1])**2 +(begin[2]-package[2])**2 )**(1/2))*1/2
+        ) - (10 if begin[0] == -1 else 0)
+
+    @log
+    def mapNode():
+        nonlocal location ,amount,shipperNum ,packages, weightMatrix, offset
+        # Map = {f"-1-{i}": costCal((-1,*location),packages[i]) -10 for i in range(amount)}
+        weightMatrix = [[0]*(amount+1) for i in range(amount + 1)]
+        offset = 0
+        for i in range(-1,amount):
+            for j in range(-1,amount):
+                if i ==j or j == -1:
+                    weightMatrix[i][j] = 0
+                else:
+                    begin = location if i == -1 else packages[i]
+                    end = packages[j]
+                    val = calPathWeight(begin,end)
+                    weightMatrix[i][j] = val
+                    if val < offset: offset = val
+        if offset < 0:
+            for i in range(-1,amount):
+                for j in range(amount):
+                    if i != j:
+                        weightMatrix[i][j]-=offset
+        print('\n'.join([str(i) for i in weightMatrix]))
+
+
+
+        # for i in range(amount):
+        #     for j in range(i+1,amount):
+        #         Map[f"{i}-{j}"] = getPathWeight(packages[i],packages[j])
+        #         if Map[f"{i}-{j}"] < offset: offset = Map[f"{i}-{j}"]
+        #         Map[f"{j}-{i}"] = getPathWeight(packages[j],packages[i])
+        #         if Map[f"{j}-{i}"] < offset: offset = Map[f"{j}-{i}"]
+        #     Map[f"-1-{i}"] = getPathWeight(location,packages[i])
+        #     if Map[f"{-1}-{i}"] < offset: offset = Map[f"{-1}-{i}"]
+        # for key in sorted(Map.keys()):
+        #     if offset != 0:
+        #         Map[key] += abs(offset)
+            # print(key,": ",Map[key])
+        # print(offset)
+
+
+    @log
+    def getPathWeight(pac1,pac2):
+        nonlocal location ,amount,shipperNum ,packages, weightMatrix
+        return weightMatrix[pac1][pac2]
+
+    def fakeFitness(shipper,costs):
+        nonlocal amount
+        avgCost = sum(costs)/amount
+        return -reduce(
+            lambda x,y : x+ abs(y - avgCost),
+            costs,0
+        )
+
+    def initState():
+        nonlocal location ,amount,shipperNum ,packages, weightMatrix, offset
+        shipper = [[-1,-1] for i in range shipperNum]
+        costs = [0] * shipperNum
+        safe = [*range(amount)]
+        for i in shipper:
+            chosen = safe[min(i[-2] )]
+
+    def crossover(parent_A, parent_B, forward = True):
+        totalPackage = len(parent_A)
+        package = np.rand(0, length-1)
+        avgCost = AvgCost(parent_A, parent_B)
+        result = [package]
+        idxBreaklst = []
+        shipperRemain = shipperNum 
+        cost = 0
+
+        while totalPackage > 1:
+            if forward:
+                px = Latter(parent_A, package)
+                py = Latter(parent_B, package)
+            else:
+                px = Former(parent_A, package)
+                py = Former(parent_B, package)
+            
+            cx = cost(px)
+            cy = cost(py)
+
+            if cx < cy:
+                package = px
+                cost += cx
+            else:
+                package = py
+                cost += cy
+            
+            if (cost > avgCost) or (totalPackage < shipperRemain):
+                result.append(-1)
+                shipperNum -= 1
+                cost = cost(0, package)
+
+            result.append(package) 
+        while (-1 in result):
+            idxBreaklst.append(result.index(-1))
+            result.remove(-1)
+            
+        return [result, idxBreaklst]
+
+    def solve():
+        pass
+        nonlocal location ,amount,shipperNum ,packages, weightMatrix, offset
+
+        while True:
+
+
+    readInput("input.txt")
+    mapNode()
+assign()
