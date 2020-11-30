@@ -4,13 +4,14 @@ from random import randint,choice,random
 from copy import deepcopy as dp
 from math import e
 import numpy as np
+from time import time
 history = {}
 def log(func):
     def inner(*args):
         global history
-        # string =lambda x : "|{:<25}|".format(x) if len(str(x)) < 16 else "|{:<25}|".format(str(x))
-        # print(*[string(str(i)) for i in (func.__name__,*args)])
-        # print(func.__name__)
+        string =lambda x : "|{:<25}|".format(x) if len(str(x)) < 16 else "|{:<25}|".format(str(x))
+        print(*[string(str(i)) for i in (func.__name__,*args)])
+        print(func.__name__)
         if history.get(func.__name__):
             history[func.__name__] += 1
         else : history[func.__name__] = 0
@@ -18,13 +19,13 @@ def log(func):
     return inner
     
 
-def assign():
+def assign(file_input, file_output):
     location ,amount,shipperNum ,packages,weightMatrix,offset =[None]*4 +[{}] +[0]
     # nonlocal location ,amount,shipperNum ,packages, Map
     WEIGHT = 4
     VOLUMNE = 3
 
-    def readInput(file_input):
+    def readInput():
         nonlocal location ,amount,shipperNum ,packages
         file = open(file_input,"r")
         res = []
@@ -60,17 +61,17 @@ def assign():
                     val = calProfit(begin,end)
                     weightMatrix[i][j] = val
                     if val < offset: offset = val
-        if offset < 0:
-            for i in range(-1,amount):
-                for j in range(amount):
-                    if i != j:
-                        weightMatrix[i][j]-=offset
-        print(offset)
-        for i,ele in enumerate(weightMatrix):
-            print(i,'->',end = ' ')
-            for j,weight in enumerate( ele):
-                print(j,': ',weight,end = " , ",sep="")
-            print('\n')
+        # if offset < 0:
+        #     for i in range(-1,amount):
+        #         for j in range(amount):
+        #             if i != j:
+        #                 weightMatrix[i][j]-=offset
+        # print(offset)
+        # for i,ele in enumerate(weightMatrix):
+        #     print(i,'->',end = ' ')
+        #     for j,weight in enumerate( ele):
+        #         print(j,': ',weight,end = " , ",sep="")
+        #     print('\n')
 
     def getProfit(pac1,pac2):
         nonlocal location ,amount,shipperNum ,packages, weightMatrix
@@ -78,11 +79,18 @@ def assign():
 
     def fakeFitness(costs):
         nonlocal shipperNum
-        avgCost = sum(costs)/shipperNum
-        return reduce(
-            lambda x,y : x+ abs(y - avgCost),
-            costs,0
-        )
+        # avgCost = sum(costs)/shipperNum
+        # return abs(reduce(
+        #     lambda x,y : x+ abs(y - avgCost),
+        #     costs,0
+        # ))
+        # return (max(costs) - min(costs))
+        temp = costs.copy()
+        temp.sort()
+        res = 0
+        for i ,val in enumerate(temp):
+            res += (-val)*(shipperNum -1 -i) + (val*i)
+        return res
 
     def Latter(lst,k):
         res = 0
@@ -235,23 +243,37 @@ def assign():
             newIdxBreaklst.sort()
         return newPackagelst + newIdxBreaklst + part3ADN(newPackagelst,newIdxBreaklst)
 
-            
-            
+    def writeOutput(ADN):
+        nonlocal amount,shipperNum
+        part1 = ADN[:amount]
+        part2 = ADN[amount:shipperNum + amount - 1]
+        
+        res = []
+        index = 0
+        for i in part2:
+            res += [part1[index:i]]
+            index = i
+        res += [part1[index:]]
+        print(res)
+        print()
+        with open(file_output,"w") as file:
+            file.write("\n".join([" ".join([str(j) for j in i]) for i in res]))
+                  
     def mainAlgo():
         nonlocal amount,shipperNum
-        N = 10
+        N = 15
         population = initPop(N)
         mutationChance = 0.15
         Best,BestFitness,theOne  = population[0],fakeFitness(population[0][amount+shipperNum -1 :]),False
-        C = 1000
-        for _ in range(C):
+        C = 10000
+        while C > 0 :
+            C -= 1
             if theOne: break
-            # populationFitness = [fakeFitness(candidate[amount+shipperNum -1 :]) for candidate in population]
-            # if 0.0 in populationFitness:
             populationFitness = []
             for candidate in population:
                 temp = fakeFitness(candidate[amount+shipperNum -1 :])
                 if temp < BestFitness:
+                    C+=500
                     Best = candidate
                     BestFitness = temp
                     if temp - 0 < 1e-7: theOne = True
@@ -265,11 +287,15 @@ def assign():
                     child = Mutation(child)
                 nextGen += [child]
             population = nextGen
-        return Best
-
-    def solve(): 
-        pass
-    readInput("input.txt")
+        return Best,BestFitness
+    
+    start = time()
+    readInput()
     mapNode()
-    print(mainAlgo())
-assign()
+    temp = mainAlgo()
+    print(temp[1])
+    writeOutput(temp[0])
+    print(f"runtime {time() -start}")
+
+assign("input.txt","output.txt")
+# [5, 8, 3, 4, 1, 7, 0, 6, 2, 1, 7
