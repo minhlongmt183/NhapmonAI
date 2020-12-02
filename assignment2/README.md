@@ -2,7 +2,6 @@
 ---
 ## ![Yêu cầu](./assignment2/BTL2.pdf)
 
-```
 .
 +-- assignment2.py
 |
@@ -11,7 +10,7 @@
 |
 |
 +-- output.txt
-```
+
 ---
 ## [Mô Tả]
 
