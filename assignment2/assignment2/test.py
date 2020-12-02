@@ -50,6 +50,8 @@ def assign():
 
     @log
     def mapNode():
+        # Caculate the profit to other packages
+
         nonlocal location ,amount,shipperNum ,packages, weightMatrix, offset
         # Map = {f"-1-{i}": costCal((-1,*location),packages[i]) -10 for i in range(amount)}
         weightMatrix = [[0]*(amount+1) for i in range(amount + 1)]
@@ -103,58 +105,114 @@ def assign():
 
     def initState():
         nonlocal location ,amount,shipperNum ,packages, weightMatrix, offset
-        shipper = [[-1,-1] for i in range shipperNum]
+        shipper = [[-1,-1] for i in range(shipperNum)]
         costs = [0] * shipperNum
         safe = [*range(amount)]
         for i in shipper:
             chosen = safe[min(i[-2] )]
 
-    def crossover(parent_A, parent_B, forward = True):
-        totalPackage = len(parent_A)
-        package = np.rand(0, length-1)
-        avgCost = AvgCost(parent_A, parent_B)
-        result = [package]
-        idxBreaklst = []
-        shipperRemain = shipperNum 
-        cost = 0
 
-        while totalPackage > 1:
-            if forward:
-                px = Latter(parent_A, package)
-                py = Latter(parent_B, package)
-            else:
-                px = Former(parent_A, package)
-                py = Former(parent_B, package)
-            
-            cx = cost(px)
-            cy = cost(py)
+    def crossover(parentA, parentB):
+        packagePA       = parentA[0]
+        idxBreaklstA    = parentA[1]
 
-            if cx < cy:
-                package = px
-                cost += cx
-            else:
-                package = py
-                cost += cy
-            
-            if (cost > avgCost) or (totalPackage < shipperRemain):
-                result.append(-1)
-                shipperNum -= 1
-                cost = cost(0, package)
+        packagePB       = parentB[0]
+        idxBreaklstB    = parentB[1]
 
-            result.append(package) 
-        while (-1 in result):
-            idxBreaklst.append(result.index(-1))
-            result.remove(-1)
+        idxBegin        = 0
+        idxEnd          = 0
+
+        while (idxBegin >= idxEnd):
+            idxBegin    = randint(0, amount -1)
+            idxEnd      = randint(0, amount -1)
+        
+        packageChild    = [None]*amount
+        for i in range(idxBegin, idxEnd+1):
+            packageChild[i] = packagePA[i]
+            packagePB.remove(packagePA[i])
+        
+        for i in range(amount):
+            if not packageChild[i]:
+                packageChild[i] = packagePB[0]
+                packagePB       = packagePB[1:]
             
-        return [result, idxBreaklst]
+        
+        while True:
+            idxBegin    = randint(0, shipperNum - 2)
+            idxEnd      = randint(0, shipperNum - 2)
+
+            if (idxBegin < idxEnd):
+                break
+        
+        idxBreaklstChild = [None]*(shipperNum-1)
+        for i in range(idxBegin, idxEnd+1):
+            idxBreaklstChild[i] = idxBreaklstA[i]
+        
+        for i in range(shipperNum-1):
+            if not idxBreaklstChild[i]:
+                idxBreaklstChild[i] = idxBreaklstB[0]
+                idxBreaklstB        = idxBreaklstB[1:]
+
+    
+        return [packageChild, idxBreaklstChild]
+
+    def Mutation(package):
+        packagelst      = package[0]
+        idxBreaklst     = package[1]
+        
+        if (np.random.random(1)[0] <= 0.5):
+            # method1
+            while True:
+                idxBegin    = randint(0, len(packagelst)-1)
+                idxEnd      = randint(0, len(packagelst)-1)
+
+                if (idxBegin < idxEnd):
+                    break
+
+            newPackagelst   = packagelst[:idxBegin] + (packagelst[idxBegin:(idxEnd+1)])[::-1] + packagelst[(idxEnd+1):]
+        else:
+
+            #   method 2
+            while True:
+                idx1    = randint(0, len(packagelst)-1)
+                idx2    = randint(0, len(packagelst)-1)
+
+                if (idx1 > 0) and (idx1 < idx2):
+                    break
+
+            # part1 = packagelst[:idx1]
+            # part2 = packagelst[idx1:(idx2+1)]
+            # part3 = packagelst[(idx2+1):]
+            
+            newPackagelst = packagelst[idx1:(idx2+1)] + packagelst[:idx1] + packagelst[(idx2+1):]
+
+        newIdxBreaklst = []
+        for i in range(idxBreaklst):
+            while True:
+                newidx = randint(0,len(packagelst)-1)
+                if newidx not in newIdxBreaklst:
+                    newIdxBreaklst.append(newidx)
+                    break
+                
+        return [newPackagelst, newIdxBreaklst]
+
+
 
     def solve():
         pass
-        nonlocal location ,amount,shipperNum ,packages, weightMatrix, offset
+        # nonlocal location ,amount,shipperNum ,packages, weightMatrix, offset
 
-        while True:
-
+        # while True:
 
     readInput("input.txt")
-    mapNode()
+
+    initialState()
+    Fiteness()
+    Selection()
+    Crossover()
+    Mutation()
+
+    # mapNode()
+
+
 assign()

@@ -2,43 +2,27 @@
 from functools import reduce
 from random import randint,choice,random
 from copy import deepcopy as dp
-from math import e
-import numpy as np
 from time import time
-history = {}
-def log(func):
-    def inner(*args):
-        global history
-        string =lambda x : "|{:<25}|".format(x) if len(str(x)) < 16 else "|{:<25}|".format(str(x))
-        print(*[string(str(i)) for i in (func.__name__,*args)])
-        print(func.__name__)
-        if history.get(func.__name__):
-            history[func.__name__] += 1
-        else : history[func.__name__] = 0
-        return func(*args)
-    return inner
-    
 
 def assign(file_input, file_output):
-    location ,amount,shipperNum ,packages,weightMatrix,offset =[None]*4 +[{}] +[0]
-    # nonlocal location ,amount,shipperNum ,packages, Map
+    depot ,amount,shipperNum ,packages,weightMatrix,offset =[None]*4 +[{}] +[0]
+    # nonlocal depot ,amount,shipperNum ,packages, Map
     WEIGHT = 4
     VOLUMNE = 3
 
     def readInput():
-        nonlocal location ,amount,shipperNum ,packages
-        file = open(file_input,"r")
-        res = []
-        line = file.readline()
+        nonlocal depot ,amount,shipperNum ,packages
+        file    = open(file_input,"r")
+        res     = []
+        line    = file.readline()
         while line:
             temp = line.split(" ")
             res += [list(map( lambda x : int(x), temp))]
             line = file.readline()
-        # res = list(map( lambda x : int(x), res))
         
-        location =(-1,*res[0])
-        amount,shipperNum  = res[1]
-        packages = [[i] + ele for i,ele in enumerate(res[2:])]
+        depot               =(-1,*res[0])
+        amount,shipperNum   = res[1]
+        packages            = [[i] + ele for i,ele in enumerate(res[2:])]
                       
     def calProfit(begin,package):
         return (
@@ -47,47 +31,28 @@ def assign(file_input, file_output):
         ) - (10 if begin[0] == -1 else 0)
 
     def mapNode():
-        nonlocal location ,amount,shipperNum ,packages, weightMatrix, offset
-        # Map = {f"-1-{i}": costCal((-1,*location),packages[i]) -10 for i in range(amount)}
+        nonlocal depot ,amount,shipperNum ,packages, weightMatrix
         weightMatrix = [[0]*(amount+1) for i in range(amount + 1)]
-        offset = 0
         for i in range(-1,amount):
             for j in range(-1,amount):
-                if i ==j or j == -1:
-                    weightMatrix[i][j] = 0
+                if i == j or j == -1:
+                    weightMatrix[i][j]  = 0
                 else:
-                    begin = location if i == -1 else packages[i]
-                    end = packages[j]
-                    val = calProfit(begin,end)
-                    weightMatrix[i][j] = val
-                    if val < offset: offset = val
-        # if offset < 0:
-        #     for i in range(-1,amount):
-        #         for j in range(amount):
-        #             if i != j:
-        #                 weightMatrix[i][j]-=offset
-        # print(offset)
-        # for i,ele in enumerate(weightMatrix):
-        #     print(i,'->',end = ' ')
-        #     for j,weight in enumerate( ele):
-        #         print(j,': ',weight,end = " , ",sep="")
-        #     print('\n')
+                    begin               = depot if i == -1 else packages[i]
+                    end                 = packages[j]
+                    weightMatrix[i][j]  = calProfit(begin,end)
 
     def getProfit(pac1,pac2):
-        nonlocal location ,amount,shipperNum ,packages, weightMatrix
+        nonlocal depot ,amount,shipperNum ,packages, weightMatrix
         return weightMatrix[pac1][pac2]
 
     def fakeFitness(costs):
         nonlocal shipperNum
-        # avgCost = sum(costs)/shipperNum
-        # return abs(reduce(
-        #     lambda x,y : x+ abs(y - avgCost),
-        #     costs,0
-        # ))
-        # return (max(costs) - min(costs))
-        temp = costs.copy()
+        temp    = costs.copy()
         temp.sort()
-        res = 0
+
+        res     = 0
+
         for i ,val in enumerate(temp):
             res += (-val)*(shipperNum -1 -i) + (val*i)
         return res
@@ -115,62 +80,67 @@ def assign(file_input, file_output):
     def part3ADN(part1,part2):
         nonlocal amount,shipperNum
         
-        part3 = []
-        cost = getProfit(-1,part1[0])
+        part3   = []
+        profit  = getProfit(-1,part1[0])
+
         for i in range(1,amount):
             if i in part2:
-                part3 += [cost]
-                cost = getProfit(-1,part1[i])
+                part3   += [profit]
+                profit   = getProfit(-1,part1[i])
             else:
-                cost += getProfit(part1[i-1],part1[i])
-        part3 += [cost]
-        # print(part1,part2,part3)
-        return part3
+                profit  += getProfit(part1[i-1],part1[i])
+
+        return part3 + [profit]
 
     def initPop(n):
         nonlocal amount,shipperNum
-        template = [*range(amount)]
-        res = []
+        template    = [*range(amount)]
+        res         = []
         for _ in range(n):
-            Breaks = []
-            while len(Breaks) < shipperNum -1:
+            breaks = []
+            while len(breaks) < shipperNum -1:
                 temp = randint(1,amount -1)
-                if temp not in Breaks: Breaks+=[temp]
-            Breaks.sort()
+                if temp not in breaks:
+                    breaks += [temp]
+
+            breaks.sort()
             
-            lst = template.copy()
+            lst     = template.copy()
             shipper = []
-            Costs = []
+            # Costs   = []
+
             while lst:
-                package = choice(lst)
+                package      = choice(lst)
                 lst.remove(package)
-                shipper +=[package]
-            res += [shipper + Breaks + part3ADN(shipper,Breaks)]
-            
-        # print(res)
+                shipper     +=[package]
+
+            res += [shipper + breaks + part3ADN(shipper,breaks)]
         return res 
 
-    def Selection(CandidatesFitnesses):
-        S = sum(CandidatesFitnesses)
-        converted = [S-i for i in CandidatesFitnesses]
-        S = sum(converted)
-        p = random()
-        temp = 0
-        for i,f in enumerate(converted):
-            temp += (f)/S
+    def Selection(candidatesFitnesses):
+        totalFitness    = sum(candidatesFitnesses)
+        compensation    = [totalFitness - i for i in candidatesFitnesses]
+
+        totalFitness    = sum(compensation)
+        p               = random()
+        temp            = 0
+
+        for i,f in enumerate(compensation):
+            temp += f/totalFitness
             if p <= temp:
                 return i
         return 0
     
     def Crossover(shipperA, shipperB, forward):
         nonlocal shipperNum,amount
-        pA = shipperA[:amount]
-        pB = shipperB[:amount]
-        Breaks = shipperA[amount:amount + shipperNum-1] if choice([True,False]) else shipperB[amount:amount + shipperNum-1]
-        k = randint(0, amount - 1)
-        Result = [k]
+        pA      = shipperA[:amount]
+        pB      = shipperB[:amount]
+        breaks  = shipperA[amount:amount + shipperNum-1] if choice([True,False]) else shipperB[amount:amount + shipperNum-1]
+        k       = randint(0, amount - 1)
+        result  = [k]
         resCost = []
-        cost = getProfit(-1,k)
+        cost    = getProfit(-1,k)
+
         while len(pA) > 1:
             if forward:
                 x = Latter(pA,k)
@@ -192,22 +162,22 @@ def assign(file_input, file_output):
             else:
                 k = y
                 temp = dy
-            if len(Result) in Breaks:
+            if len(result) in breaks:
                 resCost += [cost]
                 cost = getProfit(-1,k)
             else:
                 cost+=temp
-            Result.append(k)
+            result.append(k)
         resCost += [cost]
-        # print(Result + Breaks + resCost)
-        return Result + Breaks + resCost
+        # print(result + breaks + resCost)
+        return result + breaks + resCost
 
     def Mutation(ADN):
         nonlocal amount,shipperNum
         packagelst      = ADN[:amount]
         idxBreaklst     = ADN[amount:amount + shipperNum -1]
         # print(idxBreaklst)
-        if (np.random.random(1)[0] <= 0.5):
+        if (random() <= 0.5):
             # method1
             while True:
                 idxBegin    = randint(0, len(packagelst)-1)
@@ -261,11 +231,11 @@ def assign(file_input, file_output):
                   
     def mainAlgo():
         nonlocal amount,shipperNum
-        N = 15
-        population = initPop(N)
-        mutationChance = 0.15
-        Best,BestFitness,theOne  = population[0],fakeFitness(population[0][amount+shipperNum -1 :]),False
-        C = 10000
+        N                       = 15
+        population              = initPop(N)
+        mutationChance          = 0.15
+        Best,BestFitness,theOne = population[0],fakeFitness(population[0][amount+shipperNum -1 :]),False
+        C                       = 10000
         while C > 0 :
             C -= 1
             if theOne: break
@@ -273,10 +243,12 @@ def assign(file_input, file_output):
             for candidate in population:
                 temp = fakeFitness(candidate[amount+shipperNum -1 :])
                 if temp < BestFitness:
-                    C+=500
-                    Best = candidate
-                    BestFitness = temp
-                    if temp - 0 < 1e-7: theOne = True
+                    C           += 500
+                    Best         = candidate
+                    BestFitness  = temp
+
+                    if temp - 0 < 1e-7:
+                        theOne = True
                 populationFitness += [temp]
             nextGen = []
             for i in range(N):
