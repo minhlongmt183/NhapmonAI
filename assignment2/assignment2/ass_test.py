@@ -107,19 +107,18 @@ def assign(file_input, file_output):
 
     def Selection(candidatesFitnesses):
         totalFitness    = sum(candidatesFitnesses)
-
         compensation    = [totalFitness - i for i in candidatesFitnesses]
 
         totalFitness    = sum(compensation)
         p               = random()
         temp            = 0
 
-
         for i,f in enumerate(compensation):
             temp += f/totalFitness
             if p <= temp:
                 return i
         return 0
+
     
     def Crossover(shipperA, shipperB ):
         packagePA       = shipperA[:amount]
@@ -132,40 +131,29 @@ def assign(file_input, file_output):
         idxEnd          = 0
 
         while (idxBegin >= idxEnd):
-            idxBegin    = randint(0, amount -1)
-            idxEnd      = randint(0, amount -1)
+            idxBegin    = randint(1, amount -1)
+            idxEnd      = randint(1, amount -1)
         
-        packageChild    = [None]*amount
-        for i in range(idxBegin, idxEnd+1):
-            packageChild[i] = packagePA[i]
-            packagePB.remove(packagePA[i])
+        packageChildA   = [None]*(idxBegin) + packagePB[idxBegin:idxEnd] + [None]*(amount-idxEnd)
+        packageChildB   = [None]*(idxBegin) + packagePA[idxBegin:idxEnd] + [None]*(amount-idxEnd)
         
-        for i in range(amount):
-            if packageChild[i] == None:
-                packageChild[i] = packagePB[0]
-                packagePB       = packagePB[1:]
+        idx = 0
+        while idx < amount:
+            if packagePA[idx] not in packageChildA:
+                idxA = packageChildA.index(None)
+                packageChildA[idxA] = packagePA[idx]
 
-        while True:
-            idxBegin    = randint(0, shipperNum - 1)
-            idxEnd      = randint(0, shipperNum - 1)
+            if packagePB[idx] not in packageChildB:
+                idxB = packageChildB.index(None)
+                packageChildB[idxB] = packagePB[idx]
+                idxB = idxEnd if idxB == (idxBegin -1) else idxB + 1
 
-            if (idxBegin < idxEnd):
-                break
-        
-        idxBreaklstChild = [None]*(shipperNum-1)
-        for i in range(idxBegin, idxEnd):
-            idxBreaklstChild[i] = idxBreaklstA[i]
-            if idxBreaklstA[i] in idxBreaklstB:
-                idxBreaklstB.remove(idxBreaklstA[i])
-        
-        for i in range(shipperNum-1):
-            if idxBreaklstChild[i] == None:
-                idxBreaklstChild[i] = idxBreaklstB[0]
-                idxBreaklstB        = idxBreaklstB[1:]
-        idxBreaklstChild.sort()
+            idx += 1 
+
+        chromosome1 = packageChildA + idxBreaklstA + Part3ADN(packageChildA , idxBreaklstA )
+        chromosome2 = packageChildB + idxBreaklstB + Part3ADN(packageChildB , idxBreaklstB )
             
-
-        return packageChild + idxBreaklstChild + Part3ADN(packageChild, idxBreaklstChild)
+        return chromosome1, chromosome2
 
     def Mutation(ADN):
         nonlocal amount,shipperNum
@@ -217,10 +205,13 @@ def assign(file_input, file_output):
             res += [part1[index:i]]
             index = i
         res += [part1[index:]]
-        print(res)
-        print()
-        with open(file_output,"w") as file:
-            file.write("\n".join([" ".join([str(j) for j in i]) for i in res]))
+        # print(res)
+        # print()
+        # with open(file_output,"w") as file:
+        #     file.write("\n".join([" ".join([str(j) for j in i]) for i in res]))
+        with open(file_output, "a+") as f:
+            f.write("\n".join([" ".join([str(j) for j in i]) for i in res]))
+            f.write("\n")
                   
     def MainAlgo():
         nonlocal amount,shipperNum
@@ -228,7 +219,7 @@ def assign(file_input, file_output):
         population              = InitPop(N)
         mutationChance          = 0.15
         Best,BestFitness,theOne = population[0],Fitness(population[0][amount+shipperNum -1 :]),False
-        C                       = 10000
+        C                       = 1000
 
         while C > 0 :
             C -= 1
@@ -252,26 +243,37 @@ def assign(file_input, file_output):
                 shipperA = population[Selection(populationFitness)]
                 shipperB = population[Selection(populationFitness)]
 
-                child   = Crossover(shipperA,shipperB)
+                child1, child2   = Crossover(shipperA,shipperB)
 
                 if random() < mutationChance:
-                    child = Mutation(child)
+                    child1 = Mutation(child1)
+                    child2 = Mutation(child2)
 
-                nextGen += [child]
+                nextGen += [child1, child2]
 
             population = nextGen
         return Best,BestFitness
     
-    start = time()
+
     ReadInput()
     MapNode()
-    result = MainAlgo()
-    print(result[1])
-    WriteOutput(result[0])
-    # print("Norder: {}\n N_employee: {}".format(amount, shipperNum))
-    print(f"runtime {time() -start}")
 
+
+    result = MainAlgo()
+
+    WriteOutput(result[0])
+
+    with open("output.txt", "a+") as f:
+        f.write("\nprofit: {}\n".format(result[1]))
+
+
+    # print("Norder: {}\n N_employee: {}".format(amount, shipperNum))
+    
+start = time()
 assign("input.txt", "output.txt")
+with open("output.txt", "a+") as f:
+    f.write(f"runtime {time() -start}")
+    f.write('\n' + '-'*100 + '\n')
 
 # if __name__ == "__main__":
 #     if len(sys.argv) != 3:

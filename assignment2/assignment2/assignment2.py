@@ -25,6 +25,7 @@ def assign(file_input, file_output):
         depot               =(-1,*res[0])
         amount,shipperNum   = res[1]
         packages            = [[i] + ele for i,ele in enumerate(res[2:])]
+
                       
     def CalProfit(begin,package):
         return (
@@ -61,6 +62,8 @@ def assign(file_input, file_output):
 
         for i ,val in enumerate(temp):
             res += (-val)*(shipperNum -1 -i) + (val*i)
+                
+
         return res
 
     def Latter(lst,k):
@@ -119,6 +122,7 @@ def assign(file_input, file_output):
                 package      = choice(lst)
                 lst.remove(package)
                 shipper     +=[package]
+            
 
             res += [shipper + breaks + Part3ADN(shipper,breaks)]
         return res 
@@ -186,7 +190,6 @@ def assign(file_input, file_output):
 
         packagelst      = ADN[:amount]
         idxBreaklst     = ADN[amount:amount + shipperNum -1]
-        # print(idxBreaklst)
         if (random() <= 0.5):
             # method1
             while True:
@@ -243,7 +246,7 @@ def assign(file_input, file_output):
         population              = InitPop(N)
         mutationChance          = 0.15
         Best,BestFitness,theOne = population[0],Fitness(population[0][amount+shipperNum -1 :]),False
-        C                       = 10000
+        C                       = 1000
         while C > 0 :
             C -= 1
             if theOne: break
@@ -274,16 +277,17 @@ def assign(file_input, file_output):
             population = nextGen
         return Best,BestFitness
     
-    start = time()
+
     ReadInput()
     MapNode()
     result = MainAlgo()
     print(result[1])
     WriteOutput(result[0])
-    print(f"runtime {time() -start}")
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
         raise "USAGE: python3 assignment2.py <input.txt> <output.txt>"
 
+    start = time()
     assign(sys.argv[1],sys.argv[2])
+    print(f"runtime {time() -start}")
