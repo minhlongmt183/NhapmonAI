@@ -164,30 +164,8 @@ def assign(file_input, file_output):
                 idxBreaklstB        = idxBreaklstB[1:]
         idxBreaklstChild.sort()
             
-        
-        salemanProfit = [] 
 
-
-        idx         = 0
-        saleProfit  = GetProfit(-1, packageChild[idx])
-
-        while idx < amount -1:
-            if (idx + 1) in idxBreaklstChild:
-                salemanProfit   += [saleProfit]
-                saleProfit       = GetProfit(-1, packageChild[i+1])
-            else:
-                saleProfit += GetProfit(packageChild[idx], packageChild[idx+1])
-            
-            if (idx + 1) == amount - 1:
-                salemanProfit   += [saleProfit]
-
-            idx += 1
-
-
-        
-
-    
-        return packageChild + idxBreaklstChild + salemanProfit
+        return packageChild + idxBreaklstChild + Part3ADN(packageChild, idxBreaklstChild)
 
     def Mutation(ADN):
         nonlocal amount,shipperNum
@@ -253,7 +231,6 @@ def assign(file_input, file_output):
         C                       = 10000
 
         while C > 0 :
-            # print("C: {}".format(C))
             C -= 1
             if theOne: break
             populationFitness = []
@@ -263,7 +240,7 @@ def assign(file_input, file_output):
                 if temp < BestFitness:
                     C           += 500
                     Best         = candidate
-                    BestFitness  = abs(temp)
+                    BestFitness  = temp
 
                     if temp  < 1e-7:
                         theOne  = True
@@ -291,6 +268,7 @@ def assign(file_input, file_output):
     result = MainAlgo()
     print(result[1])
     WriteOutput(result[0])
+    # print("Norder: {}\n N_employee: {}".format(amount, shipperNum))
     print(f"runtime {time() -start}")
 
 assign("input.txt", "output.txt")
