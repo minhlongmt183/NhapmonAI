@@ -48,6 +48,8 @@ def assign(file_input, file_output):
                     begin               = depot if i == -1 else packages[i]
                     end                 = packages[j]
                     weightMatrix[i][j]  = CalProfit(begin,end)
+        
+
 
     def GetProfit(pac1,pac2):
         nonlocal depot ,amount,shipperNum ,packages, weightMatrix
@@ -141,17 +143,64 @@ def assign(file_input, file_output):
                 return i
         return 0
     
+    # def Crossover(shipperA, shipperB, forward):
+    #     nonlocal shipperNum,amount
+    #     pA              = shipperA[:amount]
+    #     pB              = shipperB[:amount]
+    #     breaks          = shipperA[amount:amount + shipperNum-1] \
+    #         if choice([True,False]) else shipperB[amount:amount + shipperNum-1]
+        
+    #     pCurr           = randint(0, amount - 1)
+    #     resPackages     = [pCurr]
+    #     resSalemanProf  = []
+    #     salemanProfit   = GetProfit(-1,pCurr)
+
+    #     while len(pA) > 1:
+    #         if forward:
+    #             pANext = Latter(pA,pCurr)
+    #             pBNext = Latter(pB,pCurr)
+    #         else:
+    #             pANext = Former(pA,pCurr)
+    #             pBNext = Former(pB,pCurr)
+
+    #         pA.remove(pCurr)
+    #         pB.remove(pCurr)
+
+    #         profitPANext    = GetProfit(pCurr,pANext)
+    #         profitPBNext    = GetProfit(pCurr,pBNext)
+
+    #         profitPNext     = 0
+
+    #         if profitPANext < profitPBNext:
+    #             pCurr       = pANext
+    #             profitPNext = profitPANext
+    #         else:
+    #             pCurr       = pBNext
+    #             profitPNext = profitPBNext
+    #         if len(resPackages) in breaks:
+    #             resSalemanProf += [salemanProfit]
+    #             salemanProfit = GetProfit(-1,pCurr)
+    #         else:
+    #             salemanProfit+=profitPNext
+    #         resPackages.append(pCurr)
+
+    #     resSalemanProf += [salemanProfit]
+    #     return resPackages + breaks + resSalemanProf
+    
     def Crossover(shipperA, shipperB, forward):
         nonlocal shipperNum,amount
         pA              = shipperA[:amount]
         pB              = shipperB[:amount]
-        breaks          = shipperA[amount:amount + shipperNum-1] \
-            if choice([True,False]) else shipperB[amount:amount + shipperNum-1]
 
+        breaks = []
+        avgVal          = sum(shipperA[amount + shipperNum-1:]) + sum(shipperA[amount + shipperNum-1:])
+        avgVal          /= 2*shipperNum
+       
         pCurr           = randint(0, amount - 1)
         resPackages     = [pCurr]
         resSalemanProf  = []
         salemanProfit   = GetProfit(-1,pCurr)
+        assignedShipper = 0
 
         while len(pA) > 1:
             if forward:
@@ -169,15 +218,18 @@ def assign(file_input, file_output):
 
             profitPNext     = 0
 
-            if profitPANext < profitPBNext:
+            if choice([True,False]):
                 pCurr       = pANext
                 profitPNext = profitPANext
             else:
                 pCurr       = pBNext
                 profitPNext = profitPBNext
-            if len(resPackages) in breaks:
+
+            if (salemanProfit >= avgVal or len(pA) == shipperNum - assignedShipper -1) and (shipperNum - assignedShipper != 1):
+                breaks += [len(resPackages)]
                 resSalemanProf += [salemanProfit]
                 salemanProfit = GetProfit(-1,pCurr)
+                assignedShipper += 1
             else:
                 salemanProfit+=profitPNext
             resPackages.append(pCurr)
@@ -215,13 +267,12 @@ def assign(file_input, file_output):
             newPackagelst = packagelst[idx1:(idx2+1)] + packagelst[:idx1] + packagelst[(idx2+1):]
 
         newIdxBreaklst = []
-        for i in range(len(idxBreaklst)):
-            while True:
-                newidx = randint(1,len(packagelst)-1)
-                if newidx not in newIdxBreaklst:
-                    newIdxBreaklst.append(newidx)
-                    break
-            newIdxBreaklst.sort()
+        begin = 1
+        end = amount - shipperNum + 1
+        for _ in range(shipperNum -1):
+            newIdxBreaklst += [randint(begin,end)]
+            begin = newIdxBreaklst[-1]+1
+            end += 1
         return newPackagelst + newIdxBreaklst + Part3ADN(newPackagelst,newIdxBreaklst)
 
     def WriteOutput(ADN):
@@ -235,9 +286,8 @@ def assign(file_input, file_output):
             res += [part1[index:i]]
             index = i
         res += [part1[index:]]
-        print(res)
-        print()
-        with open(file_output,"w") as file:
+        
+        with open(file_output,"a") as file:
             file.write("\n".join([" ".join([str(j) for j in i]) for i in res]))
                   
     def MainAlgo():
@@ -246,7 +296,7 @@ def assign(file_input, file_output):
         population              = InitPop(N)
         mutationChance          = 0.15
         Best,BestFitness,theOne = population[0],Fitness(population[0][amount+shipperNum -1 :]),False
-        C                       = 1000
+        C                       = 6000
         while C > 0 :
             C -= 1
             if theOne: break
@@ -254,7 +304,7 @@ def assign(file_input, file_output):
             for candidate in population:
                 temp = Fitness(candidate[amount+shipperNum -1 :])
                 if temp < BestFitness:
-                    C           += 500
+                    C           += 400
                     Best         = candidate
                     BestFitness  = temp
 
@@ -280,14 +330,23 @@ def assign(file_input, file_output):
 
     ReadInput()
     MapNode()
+    
     result = MainAlgo()
-    print(result[1])
+
     WriteOutput(result[0])
 
-if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        raise "USAGE: python3 assignment2.py <input.txt> <output.txt>"
+    with open("output.txt", "a+") as f:
+        f.write("\nprofit: {}\n".format(result[1]))
 
+if __name__ == "__main__":
+    # if len(sys.argv) != 3:
+    #     raise "USAGE: python3 assignment2.py <input.txt> <output.txt>"
+
+    # start = time()
+    # assign(sys.argv[1],sys.argv[2])
+    # print(f"runtime {time() -start}")
     start = time()
-    assign(sys.argv[1],sys.argv[2])
-    print(f"runtime {time() -start}")
+    assign("input.txt", "output.txt")
+    with open("output.txt", "a+") as f:
+        f.write(f"runtime {time() -start}")
+        f.write('\n' + '-'*100 + '\n')
