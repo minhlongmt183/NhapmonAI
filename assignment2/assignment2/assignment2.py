@@ -142,51 +142,7 @@ def assign(file_input, file_output):
             if p <= temp:
                 return i
         return 0
-    
-    # def Crossover(shipperA, shipperB, forward):
-    #     nonlocal shipperNum,amount
-    #     pA              = shipperA[:amount]
-    #     pB              = shipperB[:amount]
-    #     breaks          = shipperA[amount:amount + shipperNum-1] \
-    #         if choice([True,False]) else shipperB[amount:amount + shipperNum-1]
-        
-    #     pCurr           = randint(0, amount - 1)
-    #     resPackages     = [pCurr]
-    #     resSalemanProf  = []
-    #     salemanProfit   = GetProfit(-1,pCurr)
-
-    #     while len(pA) > 1:
-    #         if forward:
-    #             pANext = Latter(pA,pCurr)
-    #             pBNext = Latter(pB,pCurr)
-    #         else:
-    #             pANext = Former(pA,pCurr)
-    #             pBNext = Former(pB,pCurr)
-
-    #         pA.remove(pCurr)
-    #         pB.remove(pCurr)
-
-    #         profitPANext    = GetProfit(pCurr,pANext)
-    #         profitPBNext    = GetProfit(pCurr,pBNext)
-
-    #         profitPNext     = 0
-
-    #         if profitPANext < profitPBNext:
-    #             pCurr       = pANext
-    #             profitPNext = profitPANext
-    #         else:
-    #             pCurr       = pBNext
-    #             profitPNext = profitPBNext
-    #         if len(resPackages) in breaks:
-    #             resSalemanProf += [salemanProfit]
-    #             salemanProfit = GetProfit(-1,pCurr)
-    #         else:
-    #             salemanProfit+=profitPNext
-    #         resPackages.append(pCurr)
-
-    #     resSalemanProf += [salemanProfit]
-    #     return resPackages + breaks + resSalemanProf
-    
+   
     def Crossover(shipperA, shipperB, forward):
         nonlocal shipperNum,amount
         pA              = shipperA[:amount]
@@ -287,7 +243,7 @@ def assign(file_input, file_output):
             index = i
         res += [part1[index:]]
         
-        with open(file_output,"a") as file:
+        with open(file_output,"w") as file:
             file.write("\n".join([" ".join([str(j) for j in i]) for i in res]))
                   
     def MainAlgo():
@@ -335,18 +291,9 @@ def assign(file_input, file_output):
 
     WriteOutput(result[0])
 
-    with open("output.txt", "a+") as f:
-        f.write("\nprofit: {}\n".format(result[1]))
 
 if __name__ == "__main__":
-    # if len(sys.argv) != 3:
-    #     raise "USAGE: python3 assignment2.py <input.txt> <output.txt>"
+    if len(sys.argv) != 3:
+        raise "USAGE: python3 assignment2.py <input.txt> <output.txt>"
 
-    # start = time()
-    # assign(sys.argv[1],sys.argv[2])
-    # print(f"runtime {time() -start}")
-    start = time()
-    assign("input.txt", "output.txt")
-    with open("output.txt", "a+") as f:
-        f.write(f"runtime {time() -start}")
-        f.write('\n' + '-'*100 + '\n')
+    assign(sys.argv[1],sys.argv[2])
